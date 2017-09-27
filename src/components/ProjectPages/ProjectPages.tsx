@@ -30,15 +30,12 @@ interface State {
   modal: boolean;
   nestedModal: boolean;
   data: Array<PageData>;
-  listElements: Array<string>;
+  listElements: Array<JSX.Element>;
   activePage: PageData | undefined;
 }
 
 class ProjectPages extends Component<Props, State> {
   private socket: any;
-  private pageSubscription: any;
-  private pageSub: any;
-  private unmounted: boolean = false;
   private counter: number = 0;
 
   constructor(props: any) {
@@ -66,7 +63,7 @@ class ProjectPages extends Component<Props, State> {
     );
     this.socket
       .first()
-      .subscribe((data: any) =>
+      .subscribe((data: {data: Array<PageData>}) =>
         this.setState({ data: data.data }, this.createList)
       );
   }
@@ -74,7 +71,6 @@ class ProjectPages extends Component<Props, State> {
   componentWillUpdate(nextProps: Props, nextState: State) {
     const { activePage, modal } = this.state;
     if (activePage && !modal) {
-      console.log('happened cwupd');
       this.socket.next(
         JSON.stringify({
           id: this.counter,
@@ -88,9 +84,9 @@ class ProjectPages extends Component<Props, State> {
     }
   }
 
-  createList = () => {
+  private createList = () => {
     const { data } = this.state;
-    let elements: Array<any> = data.map((item: { title: string }) => (
+    let elements: Array<JSX.Element> = data.map((item: { title: string }) => (
       <ListGroupItem
         onClick={(e: React.SyntheticEvent<any>): void => this.activatePage(e)}>
         {item.title}
@@ -99,7 +95,7 @@ class ProjectPages extends Component<Props, State> {
     this.setState({ listElements: elements });
   };
 
-  activatePage = (e: React.SyntheticEvent<any>) => {
+  private activatePage = (e: React.SyntheticEvent<any>) => {
     const { data } = this.state;
     let target = e.target as HTMLInputElement;
     const activePage = _.find(data, elem => elem.title === target.innerText);
@@ -107,17 +103,16 @@ class ProjectPages extends Component<Props, State> {
     this.toggleNested();
   };
 
-  toggle = () => {
+  private toggle = () => {
     if (this.state.modal) this.props.closeModal();
     this.setState({
       modal: !this.state.modal
     });
   };
 
-  toggleNested = () => {
+  private toggleNested = () => {
     const { activePage } = this.state;
     if (this.state.nestedModal && activePage && this.socket) {
-      console.log('happened togglenested');
       this.socket.next(
         JSON.stringify({
           id: this.counter,
@@ -134,14 +129,14 @@ class ProjectPages extends Component<Props, State> {
     });
   };
 
-  toggleSubscribe = (e: React.SyntheticEvent<any>) => {
+  private toggleSubscribe = (e: React.SyntheticEvent<any>) => {
     const { activePage } = this.state;
     let target = e.target as HTMLInputElement;
     this.counter += 1;
     if (target.checked && activePage) {
       this.socket.next(
         JSON.stringify({
-          id: 'id1',
+          id: 'id1445',
           name: 'page.subscribe',
           args: {
             pageId: activePage.pageid
@@ -150,15 +145,13 @@ class ProjectPages extends Component<Props, State> {
       );
       this.socket
         .subscribe((data: { data: PageData }) => {
-        console.log(data)
         this.setState({ activePage: data.data });
       }, (err: any) => console.log(err),
       () => console.log('completed'))
     } else if (activePage && !target.checked) {
-      console.log('happened !checked');
       this.socket.next(
         JSON.stringify({
-          id: 'id1',
+          id: 'id144',
           name: 'page.unsubscribe',
           args: {
             pageId: activePage.pageid

@@ -15,14 +15,13 @@ interface Props {
 }
 
 interface State {
-  list: any;
+  list: Array<O<any>> | undefined;
   currentPage: number;
-  pageList: any;
-  pageElements: Array<string>;
-  paginationElements: Array<string>;
+  pageElements: Array<JSX.Element>;
+  paginationElements: Array<JSX.Element>;
   pageSet: number;
   pathName: string;
-  data: Array<string>;
+  data: Array<SocketData>;
   activePage: string;
   openModal: boolean;
 }
@@ -43,7 +42,6 @@ export default class List extends Component<Props, State> {
     this.state = {
       list: undefined,
       currentPage: 1,
-      pageList: undefined,
       pageElements: [],
       paginationElements: [],
       pageSet: 0,
@@ -76,7 +74,7 @@ export default class List extends Component<Props, State> {
         name: 'project.list'
       })
     );
-    this.socketSubject.first().subscribe((val: any) => {
+    this.socketSubject.first().subscribe((val: {data: Array<SocketData>}) => {
       this.setState({ data: val.data }, () => this.handlePageChange(1));
     });
   };
@@ -85,8 +83,8 @@ export default class List extends Component<Props, State> {
     const { data, currentPage, pageSet } = this.state;
     const indexPageNum = currentPage - 1;
     const skipBy = indexPageNum * 10 + pageSet * 5;
-    const currentPageData: Array<string> = data.slice(skipBy, skipBy + 10);
-    let elements: Array<any> = currentPageData.map((item: string) => (
+    const currentPageData: Array<SocketData> = data.slice(skipBy, skipBy + 10);
+    let elements: Array<JSX.Element> = currentPageData.map((item: SocketData) => (
       <ListGroupItem
         tag="a"
         action
@@ -118,7 +116,7 @@ export default class List extends Component<Props, State> {
 
   private renderPagination = () => {
     const { list, currentPage, pageSet, data } = this.state;
-    let elements: Array<any> = [];
+    let elements: Array<JSX.Element> = [];
     elements.push(
       <PaginationItem>
         <PaginationLink previous onClick={this.previousPageSet}>
@@ -171,9 +169,7 @@ export default class List extends Component<Props, State> {
 
   private handlePageChange = (page: number) => {
     const { list } = this.state;
-    const skipBy = page * 10;
-    const pageList: any = list.skip(skipBy).take(10);
-    this.setState({ pageList, currentPage: page }, this.createPages);
+    this.setState({ currentPage: page }, this.createPages);
   };
 
   public closeModal = () => {
