@@ -86,6 +86,7 @@ class ProjectPages extends Component<Props, State> {
     const { data } = this.state;
     let listElements: Array<JSX.Element> = data.map((item: { title: string }) => (
       <ListGroupItem
+        key={item.title}
         onClick={(e: React.SyntheticEvent<any>): void => this.activatePage(e)}>
         {item.title}
       </ListGroupItem>

@@ -4,6 +4,10 @@ export interface Props {
   location: string;
 }
 
+export interface SocketData {
+  data: Array<string>;
+}
+
 export interface State {
   list: Array<O<any>> | undefined;
   currentPage: number;
@@ -11,11 +15,8 @@ export interface State {
   paginationElements: Array<JSX.Element>;
   pageSet: number;
   pathName: string;
-  data: Array<SocketData>;
+  data: Array<string>;
   activePage: string;
   openModal: boolean;
 }
 
-export interface SocketData {
-  data: Array<string>;
-}

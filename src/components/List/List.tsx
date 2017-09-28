@@ -8,6 +8,8 @@ import {
   PaginationLink
 } from 'reactstrap';
 
+import randId from '../helpers';
+
 import { Props, State, SocketData } from './interfaces';
 
 import styles from './styles';
@@ -45,18 +47,21 @@ export default class List extends Component<Props, State> {
         name: 'project.list'
       })
     );
-    this.socketSubject.first().subscribe((val: { data: Array<SocketData> }) => {
-      this.setState({ data: val.data }, () => this.handlePageChange(1));
-    });
+    this.socketSubject
+      .first()
+      .subscribe((val: SocketData) =>
+        this.setState({ data: val.data }, () => this.handlePageChange(1))
+      );
   };
 
   private createPages = () => {
     const { data, currentPage, pageSet } = this.state;
     const indexPageNum = currentPage - 1;
     const skipBy = indexPageNum * 10 + pageSet * 5;
-    const currentPageData: Array<SocketData> = data.slice(skipBy, skipBy + 10);
-    let pageElements: Array<JSX.Element> = currentPageData.map((item: SocketData) => (
+    const currentPageData: Array<string> = data.slice(skipBy, skipBy + 10);
+    let pageElements: Array<JSX.Element> = currentPageData.map((item: string) => (
       <ListGroupItem
+        key={item}
         tag="a"
         action
         onClick={(e: React.SyntheticEvent<any>): void => this.activatePage(e)}>
@@ -89,7 +94,7 @@ export default class List extends Component<Props, State> {
     const { list, currentPage, pageSet, data } = this.state;
     let elements: Array<any> = [];
     elements.push(
-      <PaginationItem>
+      <PaginationItem key={'back'}>
         <PaginationLink previous onClick={this.previousPageSet}>
           {'<<'}
         </PaginationLink>
@@ -102,7 +107,7 @@ export default class List extends Component<Props, State> {
       .take(50)
       .finally(() => {
         elements.push(
-          <PaginationItem>
+          <PaginationItem key={'forward'}>
             <PaginationLink next onClick={this.nextPageSet}>
               {'>>'}
             </PaginationLink>
@@ -116,7 +121,7 @@ export default class List extends Component<Props, State> {
           const pageNum: number = counter / 10 + pageSet * 5;
           const active: boolean = pageNum === currentPage;
           elements.push(
-            <PaginationItem active={active}>
+            <PaginationItem active={active} key={counter}>
               <PaginationLink
                 onClick={(e: React.SyntheticEvent<any>): void => {
                   let target = e.target as HTMLInputElement;
