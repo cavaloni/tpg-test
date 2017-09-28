@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 import store from './store';
 import 'bootstrap/dist/css/bootstrap.css';
 
-import App from './components/app/app';
+import App from './components/App/App';
 
 document.addEventListener('DOMContentLoaded', () => ReactDOM.render(
   <Provider store={store}>

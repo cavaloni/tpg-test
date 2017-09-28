@@ -8,33 +8,11 @@ import {
   PaginationLink
 } from 'reactstrap';
 
+import { Props, State, SocketData } from './interfaces';
+
+import styles from './styles';
+
 import ProjectPages from '../ProjectPages/ProjectPages';
-
-interface Props {
-  location: string;
-}
-
-interface State {
-  list: Array<O<any>> | undefined;
-  currentPage: number;
-  pageElements: Array<JSX.Element>;
-  paginationElements: Array<JSX.Element>;
-  pageSet: number;
-  pathName: string;
-  data: Array<SocketData>;
-  activePage: string;
-  openModal: boolean;
-}
-
-interface SocketData {
-  data: Array<string>;
-}
-
-const styles = {
-  container: {
-    padding: '20px'
-  }
-};
 
 export default class List extends Component<Props, State> {
   constructor(props: any) {
@@ -55,18 +33,11 @@ export default class List extends Component<Props, State> {
   private socketSubject: any;
 
   componentDidMount() {
-    this.startWebSocket();
-    this.getSocketData();
-  }
-
-  private startWebSocket() {
     this.socketSubject = O.webSocket('wss://wiki-meta-explorer.herokuapp.com/');
-    this.setState({
-      list: this.socketSubject.flatMap((data: SocketData) => data.data)
-    });
+    this.getProjectList();
   }
 
-  private getSocketData = () => {
+  private getProjectList = () => {
     this.setState({ currentPage: 0 });
     this.socketSubject.next(
       JSON.stringify({
@@ -74,7 +45,7 @@ export default class List extends Component<Props, State> {
         name: 'project.list'
       })
     );
-    this.socketSubject.first().subscribe((val: {data: Array<SocketData>}) => {
+    this.socketSubject.first().subscribe((val: { data: Array<SocketData> }) => {
       this.setState({ data: val.data }, () => this.handlePageChange(1));
     });
   };
@@ -84,7 +55,7 @@ export default class List extends Component<Props, State> {
     const indexPageNum = currentPage - 1;
     const skipBy = indexPageNum * 10 + pageSet * 5;
     const currentPageData: Array<SocketData> = data.slice(skipBy, skipBy + 10);
-    let elements: Array<JSX.Element> = currentPageData.map((item: SocketData) => (
+    let pageElements: Array<JSX.Element> = currentPageData.map((item: SocketData) => (
       <ListGroupItem
         tag="a"
         action
@@ -92,7 +63,7 @@ export default class List extends Component<Props, State> {
         {item}
       </ListGroupItem>
     ));
-    this.setState({ pageElements: elements });
+    this.setState({ pageElements });
     this.renderPagination();
   };
 
@@ -116,7 +87,7 @@ export default class List extends Component<Props, State> {
 
   private renderPagination = () => {
     const { list, currentPage, pageSet, data } = this.state;
-    let elements: Array<JSX.Element> = [];
+    let elements: Array<any> = [];
     elements.push(
       <PaginationItem>
         <PaginationLink previous onClick={this.previousPageSet}>
@@ -129,37 +100,34 @@ export default class List extends Component<Props, State> {
     O.range(1, data.length)
       .skip(skipBy)
       .take(50)
-      .subscribe(
-        (val: number) => {
-          counter += 1;
-          if (counter % 10 === 0) {
-            const pageNum: number = counter / 10 + pageSet * 5;
-            const active: boolean = pageNum === currentPage;
-            elements.push(
-              <PaginationItem active={active}>
-                <PaginationLink
-                  onClick={(e: React.SyntheticEvent<any>): void => {
-                    let target = e.target as HTMLInputElement;
-                    return this.handlePageChange(Number(target.innerText));
-                  }}>
-                  {pageNum}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          }
-        },
-        (err: any) => console.log(err),
-        () => {
+      .finally(() => {
+        elements.push(
+          <PaginationItem>
+            <PaginationLink next onClick={this.nextPageSet}>
+              {'>>'}
+            </PaginationLink>
+          </PaginationItem>
+        );
+        this.setState({ paginationElements: elements });
+      })
+      .subscribe((val: number) => {
+        counter += 1;
+        if (counter % 10 === 0) {
+          const pageNum: number = counter / 10 + pageSet * 5;
+          const active: boolean = pageNum === currentPage;
           elements.push(
-            <PaginationItem>
-              <PaginationLink next onClick={this.nextPageSet}>
-                {'>>'}
+            <PaginationItem active={active}>
+              <PaginationLink
+                onClick={(e: React.SyntheticEvent<any>): void => {
+                  let target = e.target as HTMLInputElement;
+                  return this.handlePageChange(Number(target.innerText));
+                }}>
+                {pageNum}
               </PaginationLink>
             </PaginationItem>
           );
-          this.setState({ paginationElements: elements });
         }
-      );
+      });
   };
 
   private activatePage = (e: React.SyntheticEvent<any>) => {
@@ -167,14 +135,10 @@ export default class List extends Component<Props, State> {
     this.setState({ activePage: target.innerText, openModal: true });
   };
 
-  private handlePageChange = (page: number) => {
-    const { list } = this.state;
+  private handlePageChange = (page: number) =>
     this.setState({ currentPage: page }, this.createPages);
-  };
 
-  public closeModal = () => {
-    this.setState({ openModal: false });
-  };
+  public closeModal = () => this.setState({ openModal: false });
 
   render() {
     const {
@@ -193,6 +157,7 @@ export default class List extends Component<Props, State> {
         </Pagination>
         {openModal && (
           <ProjectPages
+            socket={this.socketSubject}
             activeProject={activePage}
             open={openModal}
             closeModal={this.closeModal}

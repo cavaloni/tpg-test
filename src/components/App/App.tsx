@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import List from '../list/list';
+import List from '../List/List';
 
 interface Props {
   location: string;

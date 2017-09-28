@@ -14,29 +14,17 @@ import {
 } from 'reactstrap';
 import _ from 'lodash';
 
-interface Props {
-  activeProject: string;
-  open: boolean;
-  closeModal: (() => void);
-}
-
-interface PageData {
-  title: string;
-  pageid: number;
-  name: string;
-}
-
-interface State {
-  modal: boolean;
-  nestedModal: boolean;
-  data: Array<PageData>;
-  listElements: Array<JSX.Element>;
-  activePage: PageData | undefined;
-}
+import {
+  Props,
+  BaseData,
+  ProjectRevisions,
+  PageData,
+  State
+} from './interfaces';
 
 class ProjectPages extends Component<Props, State> {
-  private socket: any;
-  private counter: number = 0;
+  private projectUpdates: any;
+  private pagesUpdates: any;
 
   constructor(props: any) {
     super(props);
@@ -50,49 +38,59 @@ class ProjectPages extends Component<Props, State> {
   }
 
   componentDidMount() {
-    const { activeProject } = this.props;
-    this.socket = O.webSocket('wss://wiki-meta-explorer.herokuapp.com/');
-    this.socket.next(
+    const { activeProject, socket } = this.props;
+    this.projectUpdates = socket.filter(
+      (val: BaseData) => val.name === 'project.update'
+    );
+    this.pagesUpdates = socket.filter(
+      (val: BaseData) => val.name === 'page.update'
+    );
+    socket.next(
       JSON.stringify({
         id: 'id1',
-        name: 'page.list',
+        name: 'project.subscribe',
         args: {
           project: activeProject
         }
       })
     );
-    this.socket
-      .first()
-      .subscribe((data: {data: Array<PageData>}) =>
-        this.setState({ data: data.data }, this.createList)
-      );
+    this.projectUpdates.subscribe((data: { data: Array<PageData> }) =>
+      this.setState({ data: data.data }, this.createProjectList)
+    );
+    this.pagesUpdates.subscribe((data: { data: PageData }) =>
+      this.setState({ activePage: data.data })
+    );
   }
 
   componentWillUpdate(nextProps: Props, nextState: State) {
     const { activePage, modal } = this.state;
     if (activePage && !modal) {
-      this.socket.next(
+      this.pagesUpdates.next(
         JSON.stringify({
-          id: this.counter,
+          id: 'id2',
           name: 'page.unsubscribe',
           args: {
             pageId: activePage.pageid
           }
         })
       );
-      this.socket.unsubscribe();
     }
   }
 
-  private createList = () => {
+  componentWillUnmount() {
+    this.pagesUpdates.unsubscribe();
+    this.projectUpdates.unsubscribe();
+  }
+
+  private createProjectList = () => {
     const { data } = this.state;
-    let elements: Array<JSX.Element> = data.map((item: { title: string }) => (
+    let listElements: Array<JSX.Element> = data.map((item: { title: string }) => (
       <ListGroupItem
         onClick={(e: React.SyntheticEvent<any>): void => this.activatePage(e)}>
         {item.title}
       </ListGroupItem>
     ));
-    this.setState({ listElements: elements });
+    this.setState({ listElements });
   };
 
   private activatePage = (e: React.SyntheticEvent<any>) => {
@@ -111,18 +109,17 @@ class ProjectPages extends Component<Props, State> {
   };
 
   private toggleNested = () => {
-    const { activePage } = this.state;
-    if (this.state.nestedModal && activePage && this.socket) {
-      this.socket.next(
+    const { activePage, nestedModal } = this.state;
+    if (nestedModal && activePage && this.pagesUpdates) {
+      this.pagesUpdates.next(
         JSON.stringify({
-          id: this.counter,
+          id: 'id2',
           name: 'page.unsubscribe',
           args: {
             pageId: activePage.pageid
           }
         })
       );
-      this.socket.unsubscribe();
     }
     this.setState({
       nestedModal: !this.state.nestedModal
@@ -132,9 +129,8 @@ class ProjectPages extends Component<Props, State> {
   private toggleSubscribe = (e: React.SyntheticEvent<any>) => {
     const { activePage } = this.state;
     let target = e.target as HTMLInputElement;
-    this.counter += 1;
     if (target.checked && activePage) {
-      this.socket.next(
+      this.pagesUpdates.next(
         JSON.stringify({
           id: 'id1445',
           name: 'page.subscribe',
@@ -143,13 +139,8 @@ class ProjectPages extends Component<Props, State> {
           }
         })
       );
-      this.socket
-        .subscribe((data: { data: PageData }) => {
-        this.setState({ activePage: data.data });
-      }, (err: any) => console.log(err),
-      () => console.log('completed'))
     } else if (activePage && !target.checked) {
-      this.socket.next(
+      this.pagesUpdates.next(
         JSON.stringify({
           id: 'id144',
           name: 'page.unsubscribe',
@@ -158,16 +149,18 @@ class ProjectPages extends Component<Props, State> {
           }
         })
       );
-      this.socket.unsubscribe();
     }
   };
 
   render() {
     const { listElements, activePage } = this.state;
+    const { activeProject } = this.props;
     return (
       <div>
         <Modal isOpen={this.state.modal} toggle={this.toggle}>
-          <ModalHeader toggle={this.toggle}>Pages List for Projects</ModalHeader>
+          <ModalHeader toggle={this.toggle}>
+            Pages List for {activeProject}
+          </ModalHeader>
           <ModalBody>
             <ListGroup>
               {listElements && listElements.map(elem => elem)}
@@ -176,7 +169,7 @@ class ProjectPages extends Component<Props, State> {
               <ModalHeader>
                 {activePage && activePage.title} MetaData
               </ModalHeader>
-              <ModalBody>{JSON.stringify(activePage, null, 2)}</ModalBody>
+              <ModalBody>{JSON.stringify(activePage, null, 4)}</ModalBody>
               <ModalFooter>
                 <Label check>
                   <Input
