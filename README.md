@@ -1,21 +1,11 @@
-# Full/Front End React Boilerplate
+# Two Pore Guys Coding Challenge
 
-Template for developing React apps.
+Web Socket challenge
 
 ## Getting started
 
-Clone locally and have fun!
+Run `npm i`
 
-Use `npm run dev` for front-end only apps.
-Use `npm run dev-build` for full-stack development.
+Run `npm run dev` to start instance of webpack-dev-server
 
-### Tech Included
-- Babel 6
-- Webpack 2.2
-- React
-- React Router 3
-- Redux
-- RxJS 5
-- CSS Modules
-- LoDash
-- ESLint (AirBnB)
+Open `localhost:3000` to view the app. 
