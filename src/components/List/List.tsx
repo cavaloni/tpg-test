@@ -136,7 +136,7 @@ export default class List extends Component<Props, State> {
   };
 
   private activatePage = (e: React.SyntheticEvent<any>) => {
-    let target = e.target as HTMLInputElement;
+    const target = e.target as HTMLInputElement;
     this.setState({ activePage: target.innerText, openModal: true });
   };
 

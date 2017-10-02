@@ -32,7 +32,6 @@ class ProjectPages extends Component<Props, State> {
       modal: true,
       nestedModal: false,
       data: [],
-      listElements: [],
       activePage: undefined
     };
   }
@@ -82,17 +81,14 @@ class ProjectPages extends Component<Props, State> {
     this.projectUpdates.unsubscribe();
   }
 
-  private createProjectList = () => {
-    const { data } = this.state;
-    let listElements: Array<JSX.Element> = data.map((item: { title: string }) => (
+  private createProjectList = (): Array<JSX.Element> =>
+    this.state.data.map((item: { title: string }) => (
       <ListGroupItem
         key={item.title}
         onClick={(e: React.SyntheticEvent<any>): void => this.activatePage(e)}>
         {item.title}
       </ListGroupItem>
     ));
-    this.setState({ listElements });
-  };
 
   private activatePage = (e: React.SyntheticEvent<any>) => {
     const { data } = this.state;
@@ -163,9 +159,7 @@ class ProjectPages extends Component<Props, State> {
             Pages List for {activeProject}
           </ModalHeader>
           <ModalBody>
-            <ListGroup>
-              {listElements && listElements.map(elem => elem)}
-            </ListGroup>
+            <ListGroup>{this.createProjectList()}</ListGroup>
             <Modal isOpen={this.state.nestedModal} toggle={this.toggleNested}>
               <ModalHeader>
                 {activePage && activePage.title} MetaData

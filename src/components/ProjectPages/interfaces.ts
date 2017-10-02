@@ -34,6 +34,5 @@ export interface State {
   modal: boolean;
   nestedModal: boolean;
   data: Array<PageData>;
-  listElements: Array<JSX.Element>;
   activePage: PageData | undefined;
 }
